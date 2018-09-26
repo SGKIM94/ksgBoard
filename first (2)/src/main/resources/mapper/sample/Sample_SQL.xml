@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sample">
+	<select id="selectBoardList" parameterType="hashmap"
+		resultType="hashmap">
+        <![CDATA[
+       	SELECT *
+		FROM (
+			SELECT COUNT(*) AS TOTAL_COUNT
+			FROM TB_BOARD
+			WHERE DEL_GB = 'N'
+		) A CROSS JOIN TB_BOARD
+		
+		WHERE	DEL_GB = 'N'
+		ORDER BY IDX DESC
+		LIMIT #{LIMIT}
+		OFFSET #{OFFSET}
+   	]]>
+	</select>
+
+	<insert id="insertBoard" parameterType="hashmap"
+		useGeneratedKeys="true" keyProperty="IDX">
+	    <![CDATA[
+        INSERT INTO TB_BOARD
+        (
+            TITLE
+            ,CONTENTS
+            ,HIT_CNT
+            ,DEL_GB
+            ,CREA_DTM
+            ,CREA_ID
+        )
+        VALUES
+        (
+            #{TITLE}
+            , #{CONTENTS}
+            , 0
+            , 'N'
+            , CURRENT_TIMESTAMP
+            , #{CREA_ID}
+        )
+    ]]>
+	</insert>
+
+	<update id="updateHitCnt" parameterType="hashmap">
+    <![CDATA[
+        UPDATE TB_BOARD
+        SET
+            HIT_CNT = COALESCE(HIT_CNT, 0) + 1
+        WHERE
+            IDX = #{IDX}   
+    ]]>
+	</update>
+
+	<select id="selectBoardDetail" parameterType="hashmap"
+		resultType="hashmap">
+    <![CDATA[
+        SELECT
+            IDX
+            ,HIT_CNT
+            ,CREA_ID
+            ,CREA_DTM
+            ,TITLE
+            ,CONTENTS
+        FROM
+            TB_BOARD
+        WHERE
+            IDX = #{IDX}       
+    ]]>
+	</select>
+
+	<update id="updateBoard" parameterType="hashmap">
+    <![CDATA[
+        UPDATE TB_BOARD
+        SET
+            TITLE = #{TITLE}
+            ,CONTENTS = #{CONTENTS}
+        WHERE
+            IDX = #{IDX}   
+    ]]>
+	</update>
+
+	<update id="deleteBoard" parameterType="hashmap">
+	<![CDATA[
+        UPDATE TB_BOARD
+        SET
+            DEL_GB = 'Y'
+        WHERE
+            IDX = #{IDX}
+    ]]>
+	</update>
+
+	<insert id="insertFile" parameterType="hashmap">
+    <![CDATA[
+        INSERT INTO TB_FILE
+        (
+            BOARD_IDX
+            ,ORIGINAL_FILE_NAME
+            ,STORED_FILE_NAME
+            ,FILE_SIZE
+            ,CREA_ID
+        )
+        VALUES
+        (
+            #{BOARD_IDX}
+            ,#{ORIGINAL_FILE_NAME}
+            ,#{STORED_FILE_NAME}
+            ,#{FILE_SIZE}
+            ,#{CREA_ID}
+        )
+    ]]>
+	</insert>
+
+	<select id="selectFileList" parameterType="hashmap"
+		resultType="hashmap">
+    <![CDATA[
+        SELECT
+            IDX,
+            ORIGINAL_FILE_NAME
+            ,ROUND(FILE_SIZE/1024,1) AS FILE_SIZE
+        FROM
+            TB_FILE
+        WHERE
+            BOARD_IDX = #{IDX}
+            AND DEL_GB = 'N'
+    ]]>
+	</select>
+
+	<update id="deleteFileList" parameterType="hashmap">
+    <![CDATA[
+        UPDATE TB_FILE SET
+            DEL_GB = 'Y'
+        WHERE
+            BOARD_IDX = #{IDX} 
+    ]]>
+	</update>
+
+	<update id="updateFile" parameterType="hashmap">
+    <![CDATA[
+        UPDATE TB_FILE SET
+            DEL_GB = 'N'
+        WHERE
+            IDX = #{FILE_IDX}  
+    ]]>
+	</update>
+
+
+
+	<!-- Comment Query -->
+
+	<insert id="insertComment" parameterType="hashmap">
+		<![CDATA[
+			INSERT INTO
+				TB_COMMENT (
+					BOARD_IDX,
+					CREA_ID,
+					GRADE,
+					CONTENTS
+				)VALUES(
+					#{IDX},
+					#{CREA_ID},
+					'0',
+					#{COM_CONTENTS}
+				)
+		]]>
+	</insert>
+
+	<select id="selectCommentList" parameterType="hashmap"
+		resultType="hashmap">
+		<![CDATA[
+			SELECT
+				IDX,
+				CREA_ID,
+				CONTENTS,
+				CREA_DTM
+			FROM
+				TB_COMMENT
+			WHERE
+				BOARD_IDX=#{IDX}
+				AND
+				DEL_GB='N'
+		]]>
+	</select>
+
+	<delete id="deleteComment" parameterType="hashmap">
+		<![CDATA[
+			UPDATE
+				TB_COMMENT
+			SET
+				DEL_GB='Y'
+			WHERE
+				IDX=#{COM_IDX}
+		]]>
+
+	</delete>
+
+	<update id="updateComment" parameterType="hashmap">
+		<![CDATA[
+			UPDATE
+				TB_COMMENT
+			SET
+				CONTENTS=#{COM_CONTENTS_UPD}
+			WHERE
+				IDX=#{COM_IDX}
+				
+		]]>
+	</update>
+	<!-- 회원가입 쿼리 -->
+	<insert id="insertUser" parameterType="HashMap">
+   <![CDATA[
+       INSERT INTO
+           TB_USER(
+              UID
+              ,UPW
+              ,UNAME
+              ,UNICK
+              ,MAIL
+              )
+          VALUES(
+              #{UID}
+              ,#{UPW}
+              ,#{UNAME}
+              ,#{UNICK}
+              ,#{EMAIL})
+   ]]>
+	</insert>
+
+	<!-- 로그인 쿼리 -->
+	<select id="selectUserID" parameterType="HashMap"
+		resultType="HashMap">
+   <![CDATA[
+       SELECT
+           IDX,
+           UID,
+           UPW,
+           UNICK
+       FROM
+           TB_USER
+       WHERE
+           UID=#{UID}
+   ]]>
+	</select>
+
+	<select id="selectUserEmail" parameterType="HashMap"
+		resultType="java.lang.String">
+   <![CDATA[
+       SELECT
+           MAIL
+       FROM
+           TB_USER
+       WHERE
+           MAIL=#{EMAIL}
+   ]]>
+	</select>
+
+	<select id="selectUserNickname" parameterType="HashMap"
+		resultType="java.lang.String">
+   <![CDATA[
+       SELECT
+           UNICK
+       FROM
+           TB_USER
+       WHERE
+           UNICK=#{UNICK}
+   ]]>
+	</select>
+
+</mapper>
